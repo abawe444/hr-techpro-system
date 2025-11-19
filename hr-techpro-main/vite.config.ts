@@ -10,6 +10,8 @@ const projectRoot = process.env.PROJECT_ROOT || import.meta.dirname
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Base path for assets. For GitHub Pages we set BASE_PATH to "/hr-techpro-system/" in CI.
+  base: process.env.BASE_PATH || "/",
   plugins: [
     react(),
     tailwindcss(),
