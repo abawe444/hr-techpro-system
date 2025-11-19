@@ -139,6 +139,8 @@ function App() {
   
   const [currentUser, setCurrentUser] = useState<Employee | null>(null);
   const [currentUserId, setCurrentUserId] = useKV<string | null>('current_user_id', null);
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
@@ -201,8 +203,34 @@ function App() {
     if (currentUserId && employees.length) {
       const user = employees.find((e) => e.id === currentUserId) || null;
       setCurrentUser(user);
+      if (!user && currentUserId) {
+        // إذا لم يُعثر على المستخدم (تم حذف البيانات مثلاً) فقم بمسح الجلسة
+        setCurrentUserId(null);
+      }
     }
   }, [currentUserId, employees]);
+
+  // دعم زر التثبيت كتطبيق (PWA)
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setIsInstallable(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    setInstallPrompt(null);
+    setIsInstallable(false);
+    if (choice?.outcome === 'accepted') {
+      toast.success('تم تثبيت التطبيق');
+    }
+  };
 
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
@@ -565,7 +593,18 @@ function App() {
     setWifiRouters(() => updatedRouters);
   };
 
+  // إذا كان لدينا معرف جلسة محفوظ لكن لم نربط المستخدم بعد، لا نعرض شاشة تسجيل الدخول
   if (!currentUser) {
+    if (currentUserId) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-10 h-10 mx-auto mb-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm text-muted-foreground">جاري استعادة الجلسة...</p>
+          </div>
+        </div>
+      );
+    }
     return (
       <>
         <AuthForms onLogin={handleLogin} onRegister={handleRegister} />
@@ -590,6 +629,11 @@ function App() {
             </div>
             
             <div className="flex items-center gap-1 sm:gap-3">
+              {isInstallable && (
+                <Button size="sm" variant="secondary" onClick={handleInstallApp} className="hidden sm:inline-flex">
+                  تثبيت التطبيق
+                </Button>
+              )}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative h-9 w-9 sm:h-10 sm:w-10">

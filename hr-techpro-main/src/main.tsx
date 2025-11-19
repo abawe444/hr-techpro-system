@@ -14,3 +14,7 @@ createRoot(document.getElementById('root')!).render(
     <App />
    </ErrorBoundary>
 )
+
+// Register Service Worker for PWA (auto updates enabled in vite-plugin-pwa)
+import { registerSW } from 'virtual:pwa-register'
+registerSW({ immediate: true })
