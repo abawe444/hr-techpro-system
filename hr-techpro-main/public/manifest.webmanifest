@@ -1,0 +1,20 @@
+{
+  "name": "HR-TechPro",
+  "short_name": "HR-TechPro",
+  "description": "نظام إدارة الموظفين والحضور",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "ar",
+  "background_color": "#ffffff",
+  "theme_color": "#E67E22",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ]
+}

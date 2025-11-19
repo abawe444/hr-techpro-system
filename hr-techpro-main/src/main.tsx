@@ -15,6 +15,12 @@ createRoot(document.getElementById('root')!).render(
    </ErrorBoundary>
 )
 
-// Register Service Worker for PWA (auto updates enabled in vite-plugin-pwa)
-import { registerSW } from 'virtual:pwa-register'
-registerSW({ immediate: true })
+// Register Service Worker for PWA (manual)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+    navigator.serviceWorker.register(swUrl).catch(() => {
+      // ignore registration errors
+    });
+  });
+}
