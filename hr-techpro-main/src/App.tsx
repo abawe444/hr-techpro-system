@@ -138,6 +138,7 @@ function App() {
   const wifiRouters = wifiRoutersRaw ?? [];
   
   const [currentUser, setCurrentUser] = useState<Employee | null>(null);
+  const [currentUserId, setCurrentUserId] = useKV<string | null>('current_user_id', null);
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [showPayrollDialog, setShowPayrollDialog] = useState(false);
@@ -168,10 +169,11 @@ function App() {
 
   useEffect(() => {
     const initializeApp = async () => {
-      if (!initialized) {
+      // لا نهيئ إلا إذا لا توجد بيانات موظفين مخزنة
+      if ((employees?.length ?? 0) === 0) {
         try {
           const defaultAdmin = await createDefaultAdmin();
-          
+
           const initialEmployees: Employee[] = [
             defaultAdmin,
             ...SAMPLE_EMPLOYEES.map(emp => ({
@@ -180,24 +182,36 @@ function App() {
               isPending: false,
             }))
           ];
-          
+
           setEmployees(() => initialEmployees);
           setInitialized(() => true);
-          
-          toast.success('تم تهيئة النظام بنجاح');
+
+          toast.success('تم تهيئة النظام لأول مرة');
         } catch (error) {
           console.error('Error initializing app:', error);
         }
       }
     };
-    
+
     initializeApp();
-  }, [initialized, setEmployees, setInitialized]);
+  }, [employees, setEmployees, setInitialized]);
+
+  // Persisted session: restore current user from KV on load and keep in sync
+  useEffect(() => {
+    if (currentUserId && employees.length) {
+      const user = employees.find((e) => e.id === currentUserId) || null;
+      setCurrentUser(user);
+    }
+  }, [currentUserId, employees]);
 
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
-  const handleLogin = (email: string, password: string) => {
-    const employee = (employees ?? []).find((e) => e.email === email && e.password === password);
+  const handleLogin = (emailOrPhoneOrId: string, password: string) => {
+    const employee = (employees ?? []).find((e) => (
+      e.email === emailOrPhoneOrId ||
+      e.employeeId === emailOrPhoneOrId ||
+      (e as any).phone === emailOrPhoneOrId
+    ) && e.password === password);
     
     if (!employee) {
       toast.error('البريد الإلكتروني أو كلمة المرور غير صحيحة');
@@ -215,6 +229,7 @@ function App() {
     }
     
     setCurrentUser(employee);
+    setCurrentUserId(employee.id);
     toast.success(`مرحباً ${employee.name}`);
   };
 
@@ -239,6 +254,7 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setCurrentUserId(null);
     toast.info('تم تسجيل الخروج');
   };
 
